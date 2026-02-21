@@ -239,19 +239,33 @@ export async function getMapPoints(options: {
   east: number;
   west: number;
   limit?: number;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<MapPoint[]> {
-  const { north, south, east, west, limit = 5000 } = options;
+  const { north, south, east, west, limit = 5000, dateFrom, dateTo } = options;
   const records = await loadRecords();
 
-  const filtered = records.filter(
-    (r) =>
-      r.latitude >= south &&
-      r.latitude <= north &&
-      r.longitude >= west &&
-      r.longitude <= east &&
-      r.latitude !== 0 &&
-      r.longitude !== 0
-  );
+  const fromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
+  const toTime = dateTo ? new Date(dateTo).getTime() : Infinity;
+
+  const filtered = records.filter((r) => {
+    if (
+      r.latitude < south ||
+      r.latitude > north ||
+      r.longitude < west ||
+      r.longitude > east ||
+      r.latitude === 0 ||
+      r.longitude === 0
+    )
+      return false;
+
+    if (dateFrom || dateTo) {
+      const t = new Date(r.crimeDate).getTime();
+      if (isNaN(t) || t < fromTime || t > toTime) return false;
+    }
+
+    return true;
+  });
 
   // Sample if too many
   let result = filtered;
@@ -265,9 +279,27 @@ export async function getMapPoints(options: {
     lat: r.latitude,
     lng: r.longitude,
     crimeName: r.crimeName1,
+    crimeDetail: r.crimeName2,
     date: r.crimeDate,
     city: r.city,
+    victims: r.totalVictims,
   }));
+}
+
+export async function getDateRange(): Promise<{ min: string; max: string }> {
+  const records = await loadRecords();
+  let minTime = Infinity;
+  let maxTime = -Infinity;
+  let minDate = "";
+  let maxDate = "";
+  for (const r of records) {
+    if (!r.crimeDate) continue;
+    const t = new Date(r.crimeDate).getTime();
+    if (isNaN(t)) continue;
+    if (t < minTime) { minTime = t; minDate = r.crimeDate; }
+    if (t > maxTime) { maxTime = t; maxDate = r.crimeDate; }
+  }
+  return { min: minDate, max: maxDate };
 }
 
 export async function getFilterOptions(): Promise<{
