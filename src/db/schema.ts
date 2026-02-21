@@ -8,6 +8,7 @@ import {
   jsonb,
   varchar,
   index,
+  real,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -83,4 +84,53 @@ export const userActions = pgTable(
     index("user_actions_action_type_idx").on(table.actionType),
     index("user_actions_created_at_idx").on(table.createdAt),
   ]
+);
+
+// ─── Document Analysis tables ───────────────────────────────────
+
+export const documentAnalyses = pgTable(
+  "document_analyses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    address: text("address"),
+    lat: real("lat"),
+    lng: real("lng"),
+    radiusKm: real("radius_km"),
+    status: varchar("status", { length: 50 }).notNull().default("pending"),
+    currentStep: varchar("current_step", { length: 50 }),
+    documentCount: integer("document_count").notNull().default(0),
+    classificationResult: jsonb("classification_result"),
+    entityResult: jsonb("entity_result"),
+    riskExtractionResult: jsonb("risk_extraction_result"),
+    contradictionResult: jsonb("contradiction_result"),
+    dataMeshResult: jsonb("data_mesh_result"),
+    masterRiskRegister: jsonb("master_risk_register"),
+    handoffPackage: jsonb("handoff_package"),
+    errorMessage: text("error_message"),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { mode: "date" }),
+  },
+  (table) => [
+    index("doc_analyses_user_id_idx").on(table.userId),
+    index("doc_analyses_status_idx").on(table.status),
+  ]
+);
+
+export const analysisDocuments = pgTable(
+  "analysis_documents",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    analysisId: uuid("analysis_id")
+      .notNull()
+      .references(() => documentAnalyses.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileType: varchar("file_type", { length: 50 }).notNull(),
+    fileSizeBytes: integer("file_size_bytes").notNull(),
+    classification: varchar("classification", { length: 100 }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [index("analysis_docs_analysis_id_idx").on(table.analysisId)]
 );

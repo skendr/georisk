@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { Search, FileUp, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { ReportKPIs } from "@/components/report/report-kpis";
 import {
   CrimesByTypePie,
@@ -19,6 +20,11 @@ import {
   TopCrimesBar,
 } from "@/components/report/report-charts";
 import { ReportMapWrapper } from "@/components/report/report-map-wrapper";
+import { DocumentUpload } from "@/components/analysis/document-upload";
+import { PipelineProgress } from "@/components/analysis/pipeline-progress";
+import { RiskSummaryKPIs } from "@/components/analysis/risk-summary-kpis";
+import { AnalysisResults } from "@/components/analysis/analysis-results";
+import { useAnalysisPipeline } from "@/hooks/use-analysis-pipeline";
 import type { ReportData } from "@/types/crime";
 
 export default function ReportPage() {
@@ -28,6 +34,10 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
   const [activeRadius, setActiveRadius] = useState(1);
+
+  // Document analysis state
+  const [files, setFiles] = useState<File[]>([]);
+  const pipeline = useAnalysisPipeline();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -66,6 +76,14 @@ export default function ReportPage() {
       setLoading(false);
     }
   }
+
+  function handleStartAnalysis() {
+    if (files.length === 0) return;
+    pipeline.startAnalysis(files, report);
+  }
+
+  const isAnalyzing =
+    pipeline.status === "uploading" || pipeline.status === "processing";
 
   return (
     <div className="space-y-6">
@@ -166,6 +184,86 @@ export default function ReportPage() {
               Enter an address above to get started
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ─── Property Document Analysis Section ────────────────────── */}
+      <Separator />
+
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">
+          Property Document Analysis
+        </h2>
+        <p className="text-muted-foreground">
+          Upload property documents (PDFs, images) for AI-powered risk
+          assessment
+        </p>
+      </div>
+
+      <DocumentUpload
+        files={files}
+        onFilesChange={setFiles}
+        disabled={isAnalyzing}
+      />
+
+      {/* Start / Cancel buttons */}
+      <div className="flex gap-3">
+        <Button
+          onClick={handleStartAnalysis}
+          disabled={files.length === 0 || isAnalyzing}
+        >
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <FileUp className="mr-2 h-4 w-4" />
+              Start Document Analysis
+            </>
+          )}
+        </Button>
+        {isAnalyzing && (
+          <Button variant="outline" onClick={pipeline.cancel}>
+            Cancel
+          </Button>
+        )}
+        {(pipeline.status === "completed" || pipeline.status === "failed") && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              pipeline.reset();
+              setFiles([]);
+            }}
+          >
+            New Analysis
+          </Button>
+        )}
+      </div>
+
+      {/* Pipeline error */}
+      {pipeline.error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          {pipeline.error}
+        </div>
+      )}
+
+      {/* Pipeline progress */}
+      {(pipeline.status === "processing" ||
+        pipeline.status === "completed" ||
+        pipeline.status === "failed") && (
+        <PipelineProgress
+          stepStates={pipeline.stepStates}
+          stepOrder={pipeline.stepOrder}
+        />
+      )}
+
+      {/* Analysis results */}
+      {pipeline.status === "completed" && pipeline.result && (
+        <div className="space-y-6">
+          <RiskSummaryKPIs result={pipeline.result} />
+          <AnalysisResults result={pipeline.result} />
         </div>
       )}
     </div>
