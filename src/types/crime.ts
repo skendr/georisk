@@ -33,8 +33,10 @@ export interface MapPoint {
   lat: number;
   lng: number;
   crimeName: string;
+  crimeDetail: string;
   date: string;
   city: string;
+  victims: number;
 }
 
 export interface PaginatedResponse<T> {
