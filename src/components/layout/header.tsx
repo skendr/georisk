@@ -17,6 +17,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/analytics": "Analytics",
   "/dashboard/records": "Records",
   "/dashboard/map": "Map",
+  "/dashboard/report": "Report",
 };
 
 export function Header() {

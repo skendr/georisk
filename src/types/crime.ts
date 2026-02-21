@@ -39,6 +39,19 @@ export interface MapPoint {
   victims: number;
 }
 
+export interface ReportData {
+  address: string;
+  lat: number;
+  lng: number;
+  totalIncidents: number;
+  totalVictims: number;
+  crimesByType: ChartDataPoint[];
+  crimesByMonth: TimeSeriesPoint[];
+  topCrimes: ChartDataPoint[];
+  riskLevel: "Low" | "Medium" | "High" | "Very High";
+  points: MapPoint[];
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;

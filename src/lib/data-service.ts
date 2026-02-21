@@ -8,6 +8,7 @@ import type {
   TimeSeriesPoint,
   MapPoint,
   PaginatedResponse,
+  ReportData,
 } from "@/types/crime";
 
 const PARQUET_PATH = path.join(process.cwd(), "data", "crime_dataset.parquet");
@@ -322,5 +323,102 @@ export async function getFilterOptions(): Promise<{
     crimeTypes: Array.from(crimeTypes).sort(),
     cities: Array.from(cities).sort(),
     agencies: Array.from(agencies).sort(),
+  };
+}
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export async function getCrimesInRadius(
+  lat: number,
+  lng: number,
+  radiusKm: number
+): Promise<ReportData> {
+  const records = await loadRecords();
+
+  const nearby = records.filter(
+    (r) =>
+      r.latitude !== 0 &&
+      r.longitude !== 0 &&
+      haversineDistance(lat, lng, r.latitude, r.longitude) <= radiusKm
+  );
+
+  // Crimes by type (crimeName1)
+  const typeMap = new Map<string, number>();
+  // Monthly trend
+  const monthMap = new Map<string, number>();
+  // Top crimes (crimeName2)
+  const detailMap = new Map<string, number>();
+
+  let totalVictims = 0;
+
+  for (const r of nearby) {
+    totalVictims += r.totalVictims;
+
+    if (r.crimeName1) {
+      typeMap.set(r.crimeName1, (typeMap.get(r.crimeName1) ?? 0) + 1);
+    }
+
+    if (r.crimeName2) {
+      detailMap.set(r.crimeName2, (detailMap.get(r.crimeName2) ?? 0) + 1);
+    }
+
+    if (r.crimeDate) {
+      const d = new Date(r.crimeDate);
+      if (!isNaN(d.getTime())) {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthMap.set(key, (monthMap.get(key) ?? 0) + 1);
+      }
+    }
+  }
+
+  const crimesByType = Array.from(typeMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, value]) => ({ label, value }));
+
+  const crimesByMonth = Array.from(monthMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+
+  const topCrimes = Array.from(detailMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([label, value]) => ({ label, value }));
+
+  const total = nearby.length;
+  const riskLevel: ReportData["riskLevel"] =
+    total < 50 ? "Low" : total < 200 ? "Medium" : total < 500 ? "High" : "Very High";
+
+  const points: MapPoint[] = nearby.slice(0, 2000).map((r) => ({
+    id: r.incidentId,
+    lat: r.latitude,
+    lng: r.longitude,
+    crimeName: r.crimeName1,
+    crimeDetail: r.crimeName2,
+    date: r.crimeDate,
+    city: r.city,
+    victims: r.totalVictims,
+  }));
+
+  return {
+    address: "",
+    lat,
+    lng,
+    totalIncidents: total,
+    totalVictims,
+    crimesByType,
+    crimesByMonth,
+    topCrimes,
+    riskLevel,
+    points,
   };
 }

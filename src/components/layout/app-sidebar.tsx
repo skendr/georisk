@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  FileText,
   LayoutDashboard,
   LogOut,
   Map,
@@ -31,6 +32,7 @@ const navItems = [
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Records", href: "/dashboard/records", icon: Table2 },
   { title: "Map", href: "/dashboard/map", icon: Map },
+  { title: "Report", href: "/dashboard/report", icon: FileText },
 ];
 
 export function AppSidebar() {
