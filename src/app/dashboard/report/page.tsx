@@ -4,6 +4,13 @@ import { useState, type FormEvent } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReportKPIs } from "@/components/report/report-kpis";
 import {
@@ -16,9 +23,11 @@ import type { ReportData } from "@/types/crime";
 
 export default function ReportPage() {
   const [address, setAddress] = useState("");
+  const [radius, setRadius] = useState("1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
+  const [activeRadius, setActiveRadius] = useState(1);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -41,8 +50,10 @@ export default function ReportPage() {
       const { lat, lng, displayName } = await geoRes.json();
 
       // Fetch report data
+      const radiusKm = parseFloat(radius) || 1;
+      setActiveRadius(radiusKm);
       const reportRes = await fetch(
-        `/api/report?lat=${lat}&lng=${lng}&radius=1`
+        `/api/report?lat=${lat}&lng=${lng}&radius=${radiusKm}`
       );
       if (!reportRes.ok) throw new Error("Failed to fetch report data");
       const data: ReportData = await reportRes.json();
@@ -62,7 +73,7 @@ export default function ReportPage() {
         <h1 className="text-2xl font-bold tracking-tight">Report</h1>
         <p className="text-muted-foreground">
           Enter an address to generate a crime analysis report for the
-          surrounding 1km area
+          surrounding area
         </p>
       </div>
 
@@ -74,6 +85,18 @@ export default function ReportPage() {
           onChange={(e) => setAddress(e.target.value)}
           className="max-w-lg"
         />
+        <Select value={radius} onValueChange={setRadius}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0.5">0.5 km</SelectItem>
+            <SelectItem value="1">1 km</SelectItem>
+            <SelectItem value="2">2 km</SelectItem>
+            <SelectItem value="5">5 km</SelectItem>
+            <SelectItem value="10">10 km</SelectItem>
+          </SelectContent>
+        </Select>
         <Button type="submit" disabled={loading || !address.trim()}>
           <Search className="mr-2 h-4 w-4" />
           {loading ? "Analyzing..." : "Analyze"}
@@ -119,6 +142,7 @@ export default function ReportPage() {
             lat={report.lat}
             lng={report.lng}
             points={report.points}
+            radiusKm={activeRadius}
           />
 
           <div className="grid gap-6 lg:grid-cols-2">
