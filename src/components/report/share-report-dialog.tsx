@@ -26,7 +26,7 @@ export function ShareReportDialog({
   shareToken?: string | null;
   onShared: (token: string) => void;
   onRevoked: () => void;
-  onExportPdf?: () => Promise<void>;
+  onExportPdf: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
@@ -170,31 +170,27 @@ export function ShareReportDialog({
           </div>
         )}
 
-        {onExportPdf && (
-          <>
-            <div className="border-t" />
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={exporting}
-              onClick={async () => {
-                setExporting(true);
-                try {
-                  await onExportPdf();
-                } finally {
-                  setExporting(false);
-                }
-              }}
-            >
-              {exporting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              {exporting ? "Exporting..." : "Export PDF"}
-            </Button>
-          </>
-        )}
+        <div className="border-t" />
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={exporting}
+          onClick={async () => {
+            setExporting(true);
+            try {
+              await onExportPdf();
+            } finally {
+              setExporting(false);
+            }
+          }}
+        >
+          {exporting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          {exporting ? "Exporting..." : "Export PDF"}
+        </Button>
       </DialogContent>
     </Dialog>
   );

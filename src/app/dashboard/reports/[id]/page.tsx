@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ReportView } from "@/components/report/report-view";
@@ -40,6 +40,7 @@ export default function SavedReportPage() {
   const [authorName, setAuthorName] = useState("Unknown");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/reports/${id}`)
@@ -78,6 +79,12 @@ export default function SavedReportPage() {
 
   const reportData = report.reportData as ReportData;
 
+  async function handleExportPdf() {
+    if (!reportRef.current) return;
+    const { exportReportAsPdf } = await import("@/lib/export-pdf");
+    await exportReportAsPdf(reportRef.current);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -87,15 +94,18 @@ export default function SavedReportPage() {
           shareToken={report.shareToken}
           onShared={(token) => setReport({ ...report, shareToken: token })}
           onRevoked={() => setReport({ ...report, shareToken: null })}
+          onExportPdf={handleExportPdf}
         />
       </div>
-      <ReportView
-        reportData={reportData}
-        radiusKm={report.radiusKm}
-        analysis={analysis}
-        authorName={authorName}
-        createdAt={report.createdAt}
-      />
+      <div ref={reportRef}>
+        <ReportView
+          reportData={reportData}
+          radiusKm={report.radiusKm}
+          analysis={analysis}
+          authorName={authorName}
+          createdAt={report.createdAt}
+        />
+      </div>
     </div>
   );
 }
