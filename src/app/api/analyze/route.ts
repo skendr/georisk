@@ -7,6 +7,8 @@ import { runAnalysisPipeline, type DocumentInput } from "@/lib/ai/pipeline";
 import type { PipelineProgressEvent } from "@/types/analysis";
 import type { ReportData } from "@/types/crime";
 
+export const maxDuration = 300; // 5 minutes for multi-step AI pipeline
+
 const ALLOWED_TYPES = [
   "application/pdf",
   "image/png",

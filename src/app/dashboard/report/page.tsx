@@ -233,13 +233,15 @@ export default function ReportPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Report</h1>
-        <p className="text-muted-foreground">
-          Upload property documents to generate a comprehensive risk and crime
-          analysis report
-        </p>
-      </div>
+      {phase !== "complete" && (
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Report</h1>
+          <p className="text-muted-foreground">
+            Upload property documents to generate a comprehensive risk and crime
+            analysis report
+          </p>
+        </div>
+      )}
 
       {/* ─── Upload Phase ──────────────────────────────────────────── */}
       {phase === "upload" && (
