@@ -33,7 +33,6 @@ export function ShareReportDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const shareUrl = shareToken
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/${shareToken}`
@@ -174,22 +173,14 @@ export function ShareReportDialog({
         <Button
           variant="outline"
           className="w-full"
-          disabled={exporting}
-          onClick={async () => {
-            setExporting(true);
-            try {
-              await onExportPdf();
-            } finally {
-              setExporting(false);
-            }
+          onClick={() => {
+            setOpen(false);
+            // Small delay for dialog to close before print dialog opens
+            setTimeout(() => onExportPdf(), 200);
           }}
         >
-          {exporting ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          {exporting ? "Exporting..." : "Export PDF"}
+          <Download className="mr-2 h-4 w-4" />
+          Export PDF
         </Button>
       </DialogContent>
     </Dialog>

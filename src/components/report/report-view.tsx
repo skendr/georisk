@@ -46,12 +46,14 @@ export function ReportView({
 
       <ReportKPIs data={reportData} />
 
-      <ReportMapWrapper
-        lat={reportData.lat}
-        lng={reportData.lng}
-        points={reportData.points}
-        radiusKm={radiusKm}
-      />
+      <div data-pdf-hide>
+        <ReportMapWrapper
+          lat={reportData.lat}
+          lng={reportData.lng}
+          points={reportData.points}
+          radiusKm={radiusKm}
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <CrimesByTypePie data={reportData.crimesByType} />

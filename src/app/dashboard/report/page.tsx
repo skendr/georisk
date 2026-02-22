@@ -165,8 +165,13 @@ export default function ReportPage() {
 
   async function handleExportPdf() {
     if (!reportRef.current) return;
-    const { exportReportAsPdf } = await import("@/lib/export-pdf");
-    await exportReportAsPdf(reportRef.current);
+    try {
+      const { exportReportAsPdf } = await import("@/lib/export-pdf");
+      await exportReportAsPdf(reportRef.current);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert("Failed to export PDF: " + (err instanceof Error ? err.message : err));
+    }
   }
 
   return (

@@ -2,19 +2,29 @@ export async function exportReportAsPdf(
   element: HTMLElement,
   filename = "georisk-report.pdf"
 ): Promise<void> {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
+  const [{ toPng }, { jsPDF }] = await Promise.all([
+    import("html-to-image"),
     import("jspdf"),
   ]);
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    windowWidth: element.scrollWidth,
+  const imgData = await toPng(element, {
+    pixelRatio: 2,
+    cacheBust: true,
+    filter: (node: HTMLElement) => {
+      // Keep text nodes and non-element nodes
+      if (!(node instanceof HTMLElement)) return true;
+      // Exclude elements marked with data-pdf-hide (e.g. Leaflet maps)
+      return !node.hasAttribute("data-pdf-hide");
+    },
   });
 
-  const imgData = canvas.toDataURL("image/png");
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = imgData;
+  });
+
   const pdf = new jsPDF("p", "mm", "a4");
 
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -24,29 +34,16 @@ export async function exportReportAsPdf(
   const contentHeight = pageHeight - margin * 2;
 
   const imgWidth = contentWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const imgHeight = (img.height * imgWidth) / img.width;
 
   let heightLeft = imgHeight;
-  let position = margin;
   let page = 0;
 
   while (heightLeft > 0) {
-    if (page > 0) {
-      pdf.addPage();
-    }
-
-    pdf.addImage(
-      imgData,
-      "PNG",
-      margin,
-      position - page * contentHeight,
-      imgWidth,
-      imgHeight
-    );
-
+    if (page > 0) pdf.addPage();
+    pdf.addImage(imgData, "PNG", margin, margin - page * contentHeight, imgWidth, imgHeight);
     heightLeft -= contentHeight;
     page++;
-    position = margin - page * contentHeight;
   }
 
   pdf.save(filename);
