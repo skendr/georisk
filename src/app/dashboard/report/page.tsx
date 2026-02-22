@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { FileUp, Loader2, Download, Search, RotateCcw } from "lucide-react";
+import { FileUp, Loader2, Search, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DocumentUpload } from "@/components/analysis/document-upload";
 import { PipelineProgress } from "@/components/analysis/pipeline-progress";
 import { ReportView } from "@/components/report/report-view";
+import { ShareReportDialog } from "@/components/report/share-report-dialog";
 import { useAnalysisPipeline } from "@/hooks/use-analysis-pipeline";
 import type { ReportData } from "@/types/crime";
 
@@ -29,9 +30,7 @@ export default function ReportPage() {
   const [isShared, setIsShared] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
 
-  const [exporting, setExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
-
   const resolvedRef = useRef(false);
 
   // Sync pipeline status → page phase
@@ -166,17 +165,9 @@ export default function ReportPage() {
 
   async function handleExportPdf() {
     if (!reportRef.current) return;
-    setExporting(true);
-    try {
-      const { exportReportAsPdf } = await import("@/lib/export-pdf");
-      await exportReportAsPdf(reportRef.current);
-    } catch {
-      // Silently fail — user can retry
-    } finally {
-      setExporting(false);
-    }
+    const { exportReportAsPdf } = await import("@/lib/export-pdf");
+    await exportReportAsPdf(reportRef.current);
   }
-
 
   return (
     <div className="space-y-6">
@@ -285,19 +276,22 @@ export default function ReportPage() {
       {phase === "complete" && reportData && (
         <>
           <div className="flex gap-3">
-            <Button onClick={handleExportPdf} disabled={exporting}>
-              {exporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export PDF
-                </>
-              )}
-            </Button>
+            {savedReportId && (
+              <ShareReportDialog
+                reportId={savedReportId}
+                isShared={isShared}
+                shareToken={shareToken}
+                onShared={(token) => {
+                  setIsShared(true);
+                  setShareToken(token);
+                }}
+                onRevoked={() => {
+                  setIsShared(false);
+                  setShareToken(null);
+                }}
+                onExportPdf={handleExportPdf}
+              />
+            )}
             <Button variant="outline" onClick={handleNewReport}>
               <RotateCcw className="mr-2 h-4 w-4" />
               New Report
@@ -311,18 +305,6 @@ export default function ReportPage() {
               analysis={pipeline.result}
               authorName={session?.user?.name ?? "Unknown"}
               createdAt={new Date()}
-              showShareButton={!!savedReportId}
-              reportId={savedReportId ?? undefined}
-              isShared={isShared}
-              shareToken={shareToken}
-              onShared={(token) => {
-                setIsShared(true);
-                setShareToken(token);
-              }}
-              onRevoked={() => {
-                setIsShared(false);
-                setShareToken(null);
-              }}
             />
           </div>
         </>

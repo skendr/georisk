@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Link, Loader2, Trash2 } from "lucide-react";
+import { Copy, Download, Link, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,18 +19,21 @@ export function ShareReportDialog({
   shareToken,
   onShared,
   onRevoked,
+  onExportPdf,
 }: {
   reportId: string;
   isShared: boolean;
   shareToken?: string | null;
   onShared: (token: string) => void;
   onRevoked: () => void;
+  onExportPdf?: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const shareUrl = shareToken
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/${shareToken}`
@@ -165,6 +168,32 @@ export function ShareReportDialog({
               Generate Share Link
             </Button>
           </div>
+        )}
+
+        {onExportPdf && (
+          <>
+            <div className="border-t" />
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  await onExportPdf();
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              {exporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {exporting ? "Exporting..." : "Export PDF"}
+            </Button>
+          </>
         )}
       </DialogContent>
     </Dialog>

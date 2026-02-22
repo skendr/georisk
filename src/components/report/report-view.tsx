@@ -9,9 +9,9 @@ import {
   TopCrimesBar,
 } from "@/components/report/report-charts";
 import { ReportIntegrityFooter } from "@/components/report/report-integrity-footer";
-import { ShareReportDialog } from "@/components/report/share-report-dialog";
 import { RiskSummaryKPIs } from "@/components/analysis/risk-summary-kpis";
 import { AnalysisResults } from "@/components/analysis/analysis-results";
+import { ClimateRiskSection } from "@/components/report/climate-risk-section";
 import type { ReportData } from "@/types/crime";
 import type { AnalysisResult } from "@/types/analysis";
 
@@ -21,12 +21,6 @@ interface ReportViewProps {
   analysis?: AnalysisResult | null;
   authorName: string;
   createdAt: string | Date;
-  showShareButton?: boolean;
-  reportId?: string;
-  isShared?: boolean;
-  shareToken?: string | null;
-  onShared?: (token: string) => void;
-  onRevoked?: () => void;
 }
 
 export function ReportView({
@@ -35,12 +29,6 @@ export function ReportView({
   analysis,
   authorName,
   createdAt,
-  showShareButton,
-  reportId,
-  isShared,
-  shareToken,
-  onShared,
-  onRevoked,
 }: ReportViewProps) {
   return (
     <div className="space-y-6">
@@ -54,15 +42,6 @@ export function ReportView({
             incidents
           </p>
         </div>
-        {showShareButton && reportId && onShared && onRevoked && (
-          <ShareReportDialog
-            reportId={reportId}
-            isShared={!!isShared}
-            shareToken={shareToken}
-            onShared={onShared}
-            onRevoked={onRevoked}
-          />
-        )}
       </div>
 
       <ReportKPIs data={reportData} />
@@ -81,6 +60,13 @@ export function ReportView({
 
       {reportData.topCrimes.length > 0 && (
         <TopCrimesBar data={reportData.topCrimes} />
+      )}
+
+      {reportData.climate && (
+        <>
+          <Separator />
+          <ClimateRiskSection data={reportData.climate} />
+        </>
       )}
 
       {analysis && (

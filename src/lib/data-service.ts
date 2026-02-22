@@ -398,8 +398,8 @@ export async function getCrimesInRadius(
   const riskLevel: ReportData["riskLevel"] =
     total < 50 ? "Low" : total < 200 ? "Medium" : total < 500 ? "High" : "Very High";
 
-  const points: MapPoint[] = nearby.slice(0, 2000).map((r) => ({
-    id: r.incidentId,
+  const points: MapPoint[] = nearby.slice(0, 2000).map((r, i) => ({
+    id: `${r.incidentId}-${i}`,
     lat: r.latitude,
     lng: r.longitude,
     crimeName: r.crimeName1,

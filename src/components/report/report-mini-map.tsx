@@ -122,7 +122,7 @@ export function ReportMiniMap({
   );
 
   return (
-    <div className="relative">
+    <div className="relative z-0">
       <MapContainer
         center={[lat, lng]}
         zoom={14}

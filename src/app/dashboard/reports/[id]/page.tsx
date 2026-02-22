@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ReportView } from "@/components/report/report-view";
+import { ShareReportDialog } from "@/components/report/share-report-dialog";
 import type { ReportData } from "@/types/crime";
 import type { AnalysisResult } from "@/types/analysis";
 
@@ -78,18 +79,23 @@ export default function SavedReportPage() {
   const reportData = report.reportData as ReportData;
 
   return (
-    <ReportView
-      reportData={reportData}
-      radiusKm={report.radiusKm}
-      analysis={analysis}
-      authorName={authorName}
-      createdAt={report.createdAt}
-      showShareButton
-      reportId={report.id}
-      isShared={!!report.shareToken}
-      shareToken={report.shareToken}
-      onShared={(token) => setReport({ ...report, shareToken: token })}
-      onRevoked={() => setReport({ ...report, shareToken: null })}
-    />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <ShareReportDialog
+          reportId={report.id}
+          isShared={!!report.shareToken}
+          shareToken={report.shareToken}
+          onShared={(token) => setReport({ ...report, shareToken: token })}
+          onRevoked={() => setReport({ ...report, shareToken: null })}
+        />
+      </div>
+      <ReportView
+        reportData={reportData}
+        radiusKm={report.radiusKm}
+        analysis={analysis}
+        authorName={authorName}
+        createdAt={report.createdAt}
+      />
+    </div>
   );
 }
