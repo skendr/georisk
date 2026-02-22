@@ -108,8 +108,16 @@ export interface CrimeRiskFactor {
   severity: string;
 }
 
+export interface ClimateRiskFactor {
+  hazardType: string;
+  metric: string;
+  riskImplication: string;
+  severity: string;
+}
+
 export interface DataMeshResult {
   crimeRiskFactors: CrimeRiskFactor[];
+  climateRiskFactors: ClimateRiskFactor[];
   areaSafetyScore: number;
   environmentalCorrelations: string[];
   summary: string;

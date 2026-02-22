@@ -32,6 +32,7 @@ export function ReportView({
 }: ReportViewProps) {
   return (
     <div className="space-y-6">
+      {/* Title + subtitle */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -44,8 +45,7 @@ export function ReportView({
         </div>
       </div>
 
-      <ReportKPIs data={reportData} />
-
+      {/* Map */}
       <div data-pdf-hide>
         <ReportMapWrapper
           lat={reportData.lat}
@@ -54,6 +54,27 @@ export function ReportView({
           radiusKm={radiusKm}
         />
       </div>
+
+      {/* Document Analysis */}
+      {analysis && (
+        <>
+          <Separator />
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">
+              Document Analysis
+            </h2>
+          </div>
+          <RiskSummaryKPIs result={analysis} />
+          <AnalysisResults result={analysis} />
+        </>
+      )}
+
+      {/* Crime Rate */}
+      <Separator />
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">Crime Rate</h2>
+      </div>
+      <ReportKPIs data={reportData} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <CrimesByTypePie data={reportData.crimesByType} />
@@ -64,23 +85,11 @@ export function ReportView({
         <TopCrimesBar data={reportData.topCrimes} />
       )}
 
+      {/* Climate Risk */}
       {reportData.climate && (
         <>
           <Separator />
           <ClimateRiskSection data={reportData.climate} />
-        </>
-      )}
-
-      {analysis && (
-        <>
-          <Separator />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              Document Analysis Results
-            </h2>
-          </div>
-          <RiskSummaryKPIs result={analysis} />
-          <AnalysisResults result={analysis} />
         </>
       )}
 

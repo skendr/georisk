@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ReportView } from "@/components/report/report-view";
 import { ShareReportDialog } from "@/components/report/share-report-dialog";
+import { DeleteReportButton } from "@/components/report/delete-report-button";
 import type { ReportData } from "@/types/crime";
 import type { AnalysisResult } from "@/types/analysis";
 
@@ -35,6 +36,7 @@ function toAnalysisResult(a: Record<string, unknown>): AnalysisResult {
 
 export default function SavedReportPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [report, setReport] = useState<ReportRow | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [authorName, setAuthorName] = useState("Unknown");
@@ -92,7 +94,7 @@ export default function SavedReportPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <ShareReportDialog
           reportId={report.id}
           isShared={!!report.shareToken}
@@ -100,6 +102,12 @@ export default function SavedReportPage() {
           onShared={(token) => setReport({ ...report, shareToken: token })}
           onRevoked={() => setReport({ ...report, shareToken: null })}
           onExportPdf={handleExportPdf}
+        />
+        <DeleteReportButton
+          reportId={report.id}
+          reportAddress={report.address}
+          variant="default"
+          onDeleted={() => router.push("/dashboard")}
         />
       </div>
       <div ref={reportRef}>

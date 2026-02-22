@@ -18,6 +18,7 @@ export default function ReportPage() {
   const { data: session } = useSession();
 
   const [files, setFiles] = useState<File[]>([]);
+  const [preAddress, setPreAddress] = useState("");
   const pipeline = useAnalysisPipeline();
 
   const [phase, setPhase] = useState<Phase>("upload");
@@ -102,7 +103,34 @@ export default function ReportPage() {
 
   // Resolution effect — runs once when analysis completes
   useEffect(() => {
-    if (pipeline.status !== "completed" || !pipeline.result || resolvedRef.current) return;
+    if (pipeline.status !== "completed" || !pipeline.result) return;
+
+    // If we pre-resolved with an address, skip geocoding and go to complete
+    if (resolvedRef.current && reportData) {
+      setPhase("complete");
+
+      // Auto-save
+      const data = reportData;
+      fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: data.address,
+          lat: data.lat,
+          lng: data.lng,
+          radiusKm: 1,
+          reportData: data,
+          analysisId: pipeline.result.id ?? null,
+        }),
+      })
+        .then((r) => r.json().catch(() => null))
+        .then((body) => {
+          if (body?.id) setSavedReportId(body.id);
+        });
+      return;
+    }
+
+    if (resolvedRef.current) return;
     resolvedRef.current = true;
 
     const result = pipeline.result;
@@ -129,9 +157,9 @@ export default function ReportPage() {
       "No property address was found in the uploaded documents. Please enter one manually."
     );
     setShowManualInput(true);
-  }, [pipeline.status, pipeline.result, resolveReport]);
+  }, [pipeline.status, pipeline.result, resolveReport, reportData]);
 
-  function handleStartAnalysis() {
+  async function handleStartAnalysis() {
     if (files.length === 0) return;
     resolvedRef.current = false;
     setSavedReportId(null);
@@ -140,6 +168,34 @@ export default function ReportPage() {
     setReportData(null);
     setShowManualInput(false);
     setResolveError(null);
+
+    const addr = preAddress.trim();
+    if (addr) {
+      // Pre-fetch crime/climate data so it's available during analysis
+      try {
+        const geoRes = await fetch(
+          `/api/geocode?q=${encodeURIComponent(addr)}`
+        );
+        if (geoRes.ok) {
+          const { lat, lng, displayName } = await geoRes.json();
+          const reportRes = await fetch(
+            `/api/report?lat=${lat}&lng=${lng}&radius=1`
+          );
+          if (reportRes.ok) {
+            const data: ReportData = await reportRes.json();
+            data.address = displayName;
+            // Mark that we already resolved, so the post-analysis effect skips
+            resolvedRef.current = true;
+            setReportData(data);
+            pipeline.startAnalysis(files, data);
+            return;
+          }
+        }
+      } catch {
+        // Fall through to null crimeData
+      }
+    }
+
     pipeline.startAnalysis(files, null);
   }
 
@@ -152,6 +208,7 @@ export default function ReportPage() {
   function handleNewReport() {
     pipeline.reset();
     setFiles([]);
+    setPreAddress("");
     setPhase("upload");
     setReportData(null);
     setSavedReportId(null);
@@ -192,6 +249,23 @@ export default function ReportPage() {
             onFilesChange={setFiles}
             disabled={false}
           />
+
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">
+              Property address{" "}
+              <span className="text-muted-foreground font-normal">(optional)</span>
+            </p>
+            <Input
+              placeholder="e.g., 123 Main St, Baltimore, MD"
+              value={preAddress}
+              onChange={(e) => setPreAddress(e.target.value)}
+              className="max-w-lg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Providing an address upfront lets the AI include crime and climate
+              data in its analysis.
+            </p>
+          </div>
 
           <div className="flex gap-3">
             <Button

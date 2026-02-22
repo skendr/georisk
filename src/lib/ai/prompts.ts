@@ -127,11 +127,28 @@ Risk level: ${crimeData.riskLevel}
 Total victims: ${crimeData.totalVictims}`
     : "No crime data available for this location.";
 
+  const climateContext =
+    crimeData?.climate
+      ? `Climate risk data for ${crimeData.climate.county} County:
+Risk score: ${crimeData.climate.riskScore.toFixed(1)} (state avg: ${crimeData.climate.stateAvgRiskScore.toFixed(1)})
+Risk level: ${crimeData.climate.riskLevel}
+Extreme heat days per year: ${crimeData.climate.extremeHeatDays.toFixed(1)}
+Heavy rain days per year: ${crimeData.climate.heavyRainDays.toFixed(1)}
+Mean temperature: ${crimeData.climate.meanTemp.toFixed(1)}°F
+Mean precipitation: ${crimeData.climate.meanPrecipitation.toFixed(1)} inches
+Property value impact: ${(crimeData.climate.propertyValueImpact * 100).toFixed(1)}%
+Median home value: $${crimeData.climate.medianHomeValue.toLocaleString()}
+Climate-adjusted value: $${crimeData.climate.adjustedHomeValue.toLocaleString()}
+County rank: ${crimeData.climate.countyRank} of ${crimeData.climate.totalCounties}`
+      : "No climate data available for this location.";
+
   return `You are a data integration analyst specializing in property risk assessment.
 
-Integrate the crime/safety data with the document-based risk findings to create a unified area risk picture.
+Integrate the crime/safety data and climate risk data with the document-based risk findings to create a unified area risk picture.
 
 ${crimeContext}
+
+${climateContext}
 
 Property profile:
 ${JSON.stringify(entities.propertyProfile, null, 2)}
@@ -144,8 +161,13 @@ For each crime type that's relevant to property risk:
 2. Assign a severity level
 3. Explain how this crime pattern could affect property value, insurance, or safety
 
+For each relevant climate hazard:
+1. Identify the hazard type and its measured metric
+2. Assign a severity level
+3. Explain how this climate factor could affect property value, insurance, structural integrity, or long-term livability
+
 Rate overall area safety (0-100, where 100 = safest).
-Identify any correlations between environmental/document risks and crime patterns.`;
+Identify any correlations between environmental/document risks, crime patterns, and climate hazards.`;
 }
 
 export function masterRiskRegisterPrompt(
@@ -167,6 +189,9 @@ ${contradictions.contradictions.map((c) => `- [${c.severity}] ${c.description}`)
 Crime/area data integration:
 ${dataMesh.crimeRiskFactors.map((c) => `- [${c.severity}] ${c.crimeType}: ${c.riskImplication}`).join("\n")}
 Area safety score: ${dataMesh.areaSafetyScore}/100
+
+Climate risk factors:
+${(dataMesh.climateRiskFactors ?? []).length > 0 ? dataMesh.climateRiskFactors.map((c) => `- [${c.severity}] ${c.hazardType} (${c.metric}): ${c.riskImplication}`).join("\n") : "No climate risk factors identified."}
 
 Create the master register:
 1. Rank all risks by combined severity and likelihood

@@ -131,8 +131,16 @@ const crimeRiskFactorSchema = z.object({
   severity: z.string().describe("Severity: critical, high, medium, low, or info"),
 });
 
+const climateRiskFactorSchema = z.object({
+  hazardType: z.string().describe("Climate hazard type (e.g. extreme_heat, heavy_rain, flooding)"),
+  metric: z.string().describe("The specific metric or measurement"),
+  riskImplication: z.string(),
+  severity: z.string().describe("Severity: critical, high, medium, low, or info"),
+});
+
 export const dataMeshResultSchema = z.object({
   crimeRiskFactors: z.array(crimeRiskFactorSchema),
+  climateRiskFactors: z.array(climateRiskFactorSchema),
   areaSafetyScore: z
     .number()
     .describe("Area safety score from 0 to 100, where 100 is safest"),
@@ -152,7 +160,7 @@ const masterRiskSchema = z.object({
   domain: z
     .string()
     .describe(
-      "Risk domain: structural, environmental, legal, financial, compliance, crime, or cross_document"
+      "Risk domain: structural, environmental, legal, financial, compliance, crime, climate, or cross_document"
     ),
   sources: z.array(z.string()).describe("Source domains or documents"),
   recommendedAction: z.string(),

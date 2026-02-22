@@ -4,9 +4,11 @@ import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapPoint } from "@/types/crime";
 
-const ReportMiniMap = dynamic(
+const UnifiedMap = dynamic(
   () =>
-    import("./report-mini-map").then((m) => ({ default: m.ReportMiniMap })),
+    import("@/components/map/unified-map").then((m) => ({
+      default: m.UnifiedMap,
+    })),
   {
     ssr: false,
     loading: () => <Skeleton className="h-[400px] w-full rounded-md" />,
@@ -24,5 +26,13 @@ export function ReportMapWrapper({
   points: MapPoint[];
   radiusKm?: number;
 }) {
-  return <ReportMiniMap lat={lat} lng={lng} points={points} radiusKm={radiusKm} />;
+  return (
+    <UnifiedMap
+      mode="report"
+      reportLat={lat}
+      reportLng={lng}
+      reportPoints={points}
+      reportRadiusKm={radiusKm}
+    />
+  );
 }

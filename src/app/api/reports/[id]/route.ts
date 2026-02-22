@@ -81,3 +81,35 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const [row] = await db
+    .select({ id: reports.id, analysisId: reports.analysisId })
+    .from(reports)
+    .where(and(eq(reports.id, id), eq(reports.userId, session.user.id)))
+    .limit(1);
+
+  if (!row) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  await db.delete(reports).where(eq(reports.id, id));
+
+  if (row.analysisId) {
+    await db
+      .delete(documentAnalyses)
+      .where(eq(documentAnalyses.id, row.analysisId));
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -4,10 +4,8 @@ import {
   BarChart3,
   FileText,
   FolderOpen,
-  LayoutDashboard,
   LogOut,
   Map,
-  Table2,
   Shield,
   User,
 } from "lucide-react";
@@ -29,12 +27,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { title: "Records", href: "/dashboard/records", icon: Table2 },
+  { title: "Reports", href: "/dashboard", icon: FolderOpen },
+  { title: "Assess", href: "/dashboard/report", icon: FileText },
   { title: "Map", href: "/dashboard/map", icon: Map },
-  { title: "Report", href: "/dashboard/report", icon: FileText },
-  { title: "My Reports", href: "/dashboard/reports", icon: FolderOpen },
+  { title: "Data Explorer", href: "/dashboard/explorer", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
