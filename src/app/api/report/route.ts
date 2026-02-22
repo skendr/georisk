@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCrimesInRadius } from "@/lib/data-service";
+import { getClimateReportForLocation } from "@/lib/climate-service";
 
 export async function GET(req: NextRequest) {
   const lat = parseFloat(req.nextUrl.searchParams.get("lat") ?? "");
@@ -11,5 +12,7 @@ export async function GET(req: NextRequest) {
   }
 
   const data = await getCrimesInRadius(lat, lng, radius);
-  return NextResponse.json(data);
+  const climate = getClimateReportForLocation(lat, lng);
+
+  return NextResponse.json({ ...data, climate });
 }

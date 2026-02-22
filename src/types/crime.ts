@@ -1,3 +1,5 @@
+import type { ClimateReportData } from "./climate";
+
 export interface CrimeRecord {
   incidentId: string;
   crimeDate: string;
@@ -50,6 +52,7 @@ export interface ReportData {
   topCrimes: ChartDataPoint[];
   riskLevel: "Low" | "Medium" | "High" | "Very High";
   points: MapPoint[];
+  climate?: ClimateReportData | null;
 }
 
 export interface PaginatedResponse<T> {
