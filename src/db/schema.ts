@@ -119,6 +119,33 @@ export const documentAnalyses = pgTable(
   ]
 );
 
+// ─── Reports table ──────────────────────────────────────────────
+
+export const reports = pgTable(
+  "reports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    address: text("address").notNull(),
+    lat: real("lat").notNull(),
+    lng: real("lng").notNull(),
+    radiusKm: real("radius_km").notNull(),
+    reportData: jsonb("report_data").notNull(),
+    analysisId: uuid("analysis_id").references(() => documentAnalyses.id),
+    shareToken: varchar("share_token", { length: 64 }).unique(),
+    sharePasswordHash: text("share_password_hash"),
+    sharedAt: timestamp("shared_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("reports_user_id_idx").on(table.userId),
+    index("reports_share_token_idx").on(table.shareToken),
+    index("reports_created_at_idx").on(table.createdAt),
+  ]
+);
+
 export const analysisDocuments = pgTable(
   "analysis_documents",
   {

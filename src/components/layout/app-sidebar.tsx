@@ -3,6 +3,7 @@
 import {
   BarChart3,
   FileText,
+  FolderOpen,
   LayoutDashboard,
   LogOut,
   Map,
@@ -33,6 +34,7 @@ const navItems = [
   { title: "Records", href: "/dashboard/records", icon: Table2 },
   { title: "Map", href: "/dashboard/map", icon: Map },
   { title: "Report", href: "/dashboard/report", icon: FileText },
+  { title: "My Reports", href: "/dashboard/reports", icon: FolderOpen },
 ];
 
 export function AppSidebar() {
@@ -54,7 +56,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}>
                     <Link href={item.href}>
                       <item.icon />
                       <span>{item.title}</span>
